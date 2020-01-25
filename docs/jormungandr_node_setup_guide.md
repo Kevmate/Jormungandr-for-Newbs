@@ -636,6 +636,18 @@ mkdir ~/jormungandr-backups/<JORMUNGANDR VERSION>
 scp -P <YOUR SSH PORT> -i ~/.ssh/<YOUR SSH PRIVATE KEY> <YOUR VPS USERNAME>@<VPS PUBLIC IP ADDRESS>:files/<FILENAME> ~/jormungandr-backups/<JORMUNGANDR VERSION>/
 ```
 
+## Get into bash
+```
+# If you don't know about bash, now is a time to learn. The .bash_profile file you have installed has all the commands in it to help you control your node. To get into bash use
+bash --login
+
+# To exit bash use
+exit
+
+# To see all the commands available from .bash_profile use
+commands
+```
+
 ### Start the node in the background
 ```
 # Start the node
