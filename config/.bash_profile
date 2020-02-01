@@ -122,7 +122,7 @@ function ping_peers() {
 function check_peers() {
     # Check if trusted peers are open
     echo "Checking trusted peers..."
-    ping_peers | cut -d' ' -f7,8
+    ping_peers | cut -d' ' -f3,4,7,8
 }
 
 function leader_logs() {
@@ -225,8 +225,28 @@ function disk_speed() {
 }
 
 function frags() {
-    echo "Current frag count..."
-    jcli rest v0 message logs -h http://127.0.0.1:${REST_PORT}/api | grep "frag" | wc -l
+    # Get fragment info
+    jcli rest v0 message logs -h http://127.0.0.1:${REST_PORT}/api
+}
+
+function fragids(){
+    # Get list of fragment ids
+    frags | grep "fragment_id"
+}
+
+function nfrags() {
+    # Number of frags
+    fragc=`fragids | wc -l`
+    echo -e "Number of fragments is "$fragc
+}
+
+function get_block(){
+    # Get block contents
+    if [[ -z $1 ]]; then
+        echo "Blockid required"
+    else
+        jcli rest v0 block $1 get
+    fi
 }
 
 function portsentry_stats() {
@@ -276,14 +296,22 @@ function next() {
     fi
 }
 
+function shelleyLast3() {
+    # Contact IOHK testnet explorer to get last 3 blocks
+    shelleyResult=`curl -X POST -H "Content-Type: application/json" --data '{"query": " query {   allBlocks (last: 3) {    pageInfo { hasNextPage hasPreviousPage startCursor endCursor  }  totalCount  edges {    node {     id  date { slot epoch {  id  firstBlock { id  }  lastBlock { id  }  totalBlocks }  }  transactions { totalCount edges {   node {    id  block { id date {   slot   epoch {    id  firstBlock { id  }  lastBlock { id  }  totalBlocks   } } leader {   __typename   ... on Pool {    id  blocks { totalCount  }  registration { startValidity managementThreshold owners operators rewards {   fixed   ratio {  numerator  denominator   }   maxLimit } rewardAccount {   id }  }   } }  }  inputs { amount address {   id }  }  outputs { amount address {   id }  }   }   cursor }  }  previousBlock { id  }  chainLength  leader { __typename ... on Pool {  id  blocks { totalCount  }  registration { startValidity managementThreshold owners operators rewards {   fixed   ratio {  numerator  denominator   }   maxLimit } rewardAccount {   id }  } }  }    }    cursor  }   } }  "}' https://explorer.incentivized-testnet.iohkdev.io/explorer/graphql 2> /dev/null`
+}
+
 function delta() {
-    # Delta my node vs shelley block count
+    # Compare my node with shelley block count
     RED='\033[0;31m'
     GREEN='\033[0;32m'
     ORANGE='\033[0;33m'
     NC='\033[0m' # No Color
     lastBlockHash=`stats | head -n 6 | tail -n 1 | awk '{print $2}'`
-    lastBlockCount=`stats | head -n 7 | tail -n 1 | awk '{print $2}' | tr -d \"`
+    lastBlockNum=`stats | head -n 7 | tail -n 1 | awk '{print $2}' | tr -d \"`
+    if [[ ! $lastBlockNum =~ ^[0-9]+$ ]]; then
+        lastBlockNum=None
+    fi
     now=$(date +"%r")
     tries=6
     deltaMax=10
@@ -291,11 +319,11 @@ function delta() {
 
     while [[ $counter -le $tries ]]
     do
-        shelleyExplorerJson=`curl -X POST -H "Content-Type: application/json" --data '{"query": " query {   allBlocks (last: 3) {    pageInfo { hasNextPage hasPreviousPage startCursor endCursor  }  totalCount  edges {    node {     id  date { slot epoch {  id  firstBlock { id  }  lastBlock { id  }  totalBlocks }  }  transactions { totalCount edges {   node {    id  block { id date {   slot   epoch {    id  firstBlock { id  }  lastBlock { id  }  totalBlocks   } } leader {   __typename   ... on Pool {    id  blocks { totalCount  }  registration { startValidity managementThreshold owners operators rewards {   fixed   ratio {  numerator  denominator   }   maxLimit } rewardAccount {   id }  }   } }  }  inputs { amount address {   id }  }  outputs { amount address {   id }  }   }   cursor }  }  previousBlock { id  }  chainLength  leader { __typename ... on Pool {  id  blocks { totalCount  }  registration { startValidity managementThreshold owners operators rewards {   fixed   ratio {  numerator  denominator   }   maxLimit } rewardAccount {   id }  } }  }    }    cursor  }   } }  "}' https://explorer.incentivized-testnet.iohkdev.io/explorer/graphql 2> /dev/null`
-        shelleyLastBlockCount=`echo $shelleyExplorerJson | grep -m 1 -o '"chainLength":"[^"]*' | cut -d'"' -f4 | awk '{print $NF}'`
-        shelleyLastBlockCount=`echo $shelleyLastBlockCount|cut -d ' ' -f3`
-        deltaBlockCount=`echo $(($shelleyLastBlockCount-$lastBlockCount))`
-        if [[ ! -z $shelleyLastBlockCount ]]; then
+        shelleyLast3
+        shelleyBlocks=`echo $shelleyResult | grep -m 1 -o '"chainLength":"[^"]*' | cut -d'"' -f4`
+        shelleyBlockNum=`echo $shelleyBlocks | cut -d ' ' -f3`
+        deltaBlockCount=`echo $(($shelleyBlockNum-$lastBlockNum))`
+        if [[ ! -z $shelleyBlockNum ]]; then
             break
         fi
 
@@ -304,23 +332,23 @@ function delta() {
         sleep 3
     done
 
-    if [[ -z "$shelleyLastBlockCount" ]]; then
+    if [[ -z "$shelleyBlockNum" ]]; then
         echo -e ${RED}"Invalid fork."${NC}
     else
-        deltaBlockCount=`echo $(($shelleyLastBlockCount-$lastBlockCount))`
+        deltaBlockCount=`echo $(($shelleyBlockNum-$lastBlockNum))`
     fi
 
-    echo "LastBlockCount: " $lastBlockCount
-    echo "LastShelleyBlock: " $shelleyLastBlockCount
-    echo "DeltaCount: " $deltaBlockCount
+    echo "My last block: " $lastBlockNum
+    echo "Shelley block: " $shelleyBlockNum
+    echo "Delta        : " $deltaBlockCount
 
     # Next scheduled to be a slot leader
     if [[ -f ~/files/node_scret.yaml ]]; then
         next
     fi
 
-    if [[ -z $lastBlockCount || ! $lastBlockCount =~ ^[0-9]+$ ]]; then
-        echo -e ${RED}"$now: My node is starting or not running. Use 'stats' to get more info."${NC}
+    if [[ -z $lastBlockNum || ! $lastBlockNum =~ ^[0-9]+$ ]]; then
+        echo -e "$now: My node is starting or not running. Use 'stats' to get more info."
         return
     fi
     if [[ $deltaBlockCount -lt $deltaMax && $deltaBlockCount -gt 0 ]]; then
@@ -378,8 +406,11 @@ function commands(){
     echo -e ${GREEN}"blocked"${NC}": List of ip addresses recently blocked by UFW"
     echo -e ${GREEN}"nblocked"${NC}": Number of ip addresses blocked by UFW"
     echo -e ${GREEN}"disk_speed"${NC}": Show disk write speed"
-    echo -e ${GREEN}"frags"${NC}": Show current frag count"
+    echo -e ${GREEN}"frags"${NC}": Show current fragment info"
+    echo -e ${GREEN}"fragids"${NC}": Show list of fragment ids"
+    echo -e ${GREEN}"nfrags"${NC}": Show current frag count"
     echo -e ${GREEN}"portsentry_stats"${NC}": Port sentry stats"
     echo -e ${GREEN}"tip"${NC}": Search logs for current branch tip updates"
     echo -e ${GREEN}"next"${NC}": Next scheduled block for leader"
+    echo -e ${GREEN}"get_block blockid"${NC}": Get contents of a blockid from my blockchain"
 }
