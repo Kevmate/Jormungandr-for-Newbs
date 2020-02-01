@@ -232,7 +232,7 @@ sudo service sshd reload
 ## Download some scripts
 ```
 # Download files from my repo
-git clone https://github.com/Chris-Graffagnino/Jormungandr-for-Newbs.git -b files-only --single-branch files
+git clone https://github.com/Kevmate/Jormungandr-for-Newbs.git -b files-only --single-branch files
 
 # Make the scripts executable
 chmod +x ~/files/send-lovelaces.sh
