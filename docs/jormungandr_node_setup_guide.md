@@ -626,9 +626,6 @@ start
 
 # Always check the logs when starting a node to make sure it started without error
 logs
-
-# A listing of all the commands with a brief description
-commands
 ```
 
 ## Monitor the node
