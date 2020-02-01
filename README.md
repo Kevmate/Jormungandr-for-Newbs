@@ -5,6 +5,6 @@ At the moment Shelley testnet is in its early stages. To be honest I found the d
 
 Hey, I have a running staking node, all I have to do is tell you what I did.
 
-Erm, ok, it turned out harder than that. All the tiral and error that goes on means you sort of forget all the steps. However, to cut a long story short, I have created this fabulous step by step guide. Collected from generally around the place and pasted into a story.
+Erm, ok, it turned out harder than that. All the trial and error that goes on means you sort of forget all the steps. However, to cut a long story short, I have created this fabulous step by step guide. Collected from generally around the place and pasted into a story.
 
 Enjoy.
