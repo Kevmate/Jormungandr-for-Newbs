@@ -586,6 +586,7 @@ mkdir ~/storage
 ```
 
 ### Generate the keys
+```
 # Generate the secret key
 `jcli key generate --type=Ed25519Extended > ~/files/receiver_secret.key`
 
@@ -594,8 +595,8 @@ mkdir ~/storage
 
 # Derive the public address from the public key
 jcli address account --testing --prefix addr $(cat ~/files/receiver_public.key) | tee ~/files/receiver_account.txt
-```
-### Backup the keys
+
+# Backup the keys
 # Caution: Protect `receiver_secret.key`, if someone gets it they can take funds that belong to it
 
 # Enter this command on your local machine
@@ -807,9 +808,7 @@ logs
 ### Back up staking keys, etc
 ```
 # In the terminal tab for your LOCAL machine
-# Copy staking keys to your local machine
-
-scp -P <YOUR SSH PORT> -i ~/.ssh/<YOUR SSH PRIVATE KEY> <YOUR VPS USERNAME>@<YOUR PUBLIC IP ADDR>:files/<FILENAME> ~/jormungandr-backups/<JORMUNGANDR VERSION>/
+scp -P <YOUR SSH PORT> -i ~/.ssh/<YOUR SSH PRIVATE KEY> <YOUR VPS USERNAME>@<YOUR PUBLIC IP ADDR>:files/<FILENAME> ~/jormungandr-backups/
 ```
 
 ### Troubleshooting
