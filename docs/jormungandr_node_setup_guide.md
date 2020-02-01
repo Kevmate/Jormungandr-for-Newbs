@@ -585,19 +585,19 @@ mempool:
 mkdir ~/storage
 ```
 
-### Generate the secret key
+### Generate the keys
+# Generate the secret key
 `jcli key generate --type=Ed25519Extended > ~/files/receiver_secret.key`
 
-### derive the public key from the secret key
+# Derive the public key from the secret key
 `cat ~/files/receiver_secret.key | jcli key to-public > ~/files/receiver_public.key`
 
-### derive the public address from the public key
+# Derive the public address from the public key
 jcli address account --testing --prefix addr $(cat ~/files/receiver_public.key) | tee ~/files/receiver_account.txt
 ```
+### Backup the keys
+# Caution: Protect `receiver_secret.key`, if someone gets it they can take funds that belong to it
 
-## Backup the keys
-### Caution: Protect `receiver_secret.key`, if someone gets it they can take funds that belong to it
-```
 # Enter this command on your local machine
 mkdir ~/jormungandr-backup
 
@@ -607,8 +607,8 @@ scp -P <YOUR SSH PORT> -i ~/.ssh/<YOUR SSH PRIVATE KEY> <YOUR VPS USERNAME>@<VPS
 
 ## Get into bash
 ```
-# If you don't know about bash, now is a time to learn. The .bash_profile file you have installed has
-# all the commands in it to help you control your node. To get into bash use
+# If you don't know about bash, now is a time to learn. The .bash_profile file you have installed
+# has all the commands in it to help you control your node. To get into bash use
 bash --login
 
 # To see all the commands available from .bash_profile use
@@ -622,13 +622,12 @@ nohup jormungandr --config ~/files/node-config.yaml --genesis-block-hash ${GENES
 
 # Or use this shell function
 start
-```
 
-### Inspect the output 
-
-```
 # Always check the logs when starting a node to make sure it started without error
 logs
+
+# A listing of all the commands with a brief description
+commands
 ```
 
 ## Monitor the node
@@ -642,16 +641,12 @@ delta
 # Stop jormungandr
 stop
 
-# A listing of all the commands with a brief description
-commands
-
-# How many nodes are connected?
-# Columns are [protocol, bytes-received, bytes-sent, your-ip, foreign-ip, state]
+# Show connected nodes [protocol, bytes-received, bytes-sent, your-ip, foreign-ip, state]
 nodes
 
-# Check memory usage
-# If you have multiple cpu's, press shift+i for an accurate measurement
-memory (press "q" to quit)
+# Check memory usage (If you have multiple cpus press shift+i)
+# Press q to quit
+memory
 
 # Is my stake pool id visible to other nodes?
 is_pool_visible
