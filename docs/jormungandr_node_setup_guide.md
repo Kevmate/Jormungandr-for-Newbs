@@ -585,7 +585,7 @@ mempool:
 mkdir ~/storage
 ```
 
-### Generate the keys
+### Generate your keys
 ```
 # Generate the secret key
 `jcli key generate --type=Ed25519Extended > ~/files/receiver_secret.key`
@@ -763,7 +763,7 @@ usage: ~/files/delegate-account.sh <ACCOUNT-SK> <STAKE_POOL_ID>:1
     Multiple pools, separated by spaces, e.g. <ID>:<WEIGHT> <ID>:<WEIGHT>
 ```
 
-## Create stake pool
+## Build your stakepool using your keys
 ```
 # Before continuing, make sure receiver_account.txt has a balance of at least 500,300,000 lovelaces
 # This may take a minute or two to finish
@@ -771,14 +771,12 @@ usage: ~/files/delegate-account.sh <ACCOUNT-SK> <STAKE_POOL_ID>:1
 
 # Move node_secret & stake_pool.id to ~/files
 mv node_secret.yaml ~/files && mv stake_pool.id ~/files
-```
 
-### Check that your stake pool is visible
-```
+# Check that your stake pool is visible
 is_pool_visible
 ```
 
-### Restart node as leader-candidate
+## Start node as leader
 ```
 # After restarting, you will be eligible to receive rewards at the start of
 # the next epoch
@@ -792,17 +790,16 @@ empty_logs
 # Start the node as leader
 start_leader
 
-# Always check the logs for errors when starting the node to
-# make sure there were no errors.
+# Always check the logs for errors when starting the node
 logs
 ```
 
-### Delegate your funds to your stake pool
+## Delegate your funds to your stake pool
 ```
 ~/files/delegate-account.sh $(cat ~/files/receiver_secret.key) $(cat ~/files/stake_pool.id):1
 ```
 
-### Back up staking keys, etc
+## Back up staking keys, etc
 ```
 # In the terminal tab for your LOCAL machine
 scp -P <YOUR SSH PORT> -i ~/.ssh/<YOUR SSH PRIVATE KEY> <YOUR VPS USERNAME>@<YOUR PUBLIC IP ADDR>:files/<FILENAME> ~/jormungandr-backups/
