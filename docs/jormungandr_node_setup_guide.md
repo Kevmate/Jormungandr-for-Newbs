@@ -265,39 +265,17 @@ source ~/.bash_profile
 # export PS1="\[\e[36m\]\w\[\e[m\]\[\e[35m\] \`parse_git_branch\`\[\e[m\] \[\e[36m\]:\[\e[m\] "
 ```
 
-### About environment variables
-```
-# All-caps words are variables available to the current shell, ie "environment".
-# You can declare an environment variable like this, (go ahead and try it): 
-HELLO="Hello"
-
-# an environment variable is referenced by invoking itwith a "$" prepended to it.
-# Print your newly created environment variable:
-echo $HELLO
-
-# Environment variables are good for the current session. Next time you log-in, $HELLO will be no more...
-
-# Want to see all the environment variables?:
-printenv
-
-# Okay, enough about that. Next, we'll add some commands to .bashrc so important values are loaded as
-# environment variables every time we log in.
-```
-
 ## Type each of the following commands in terminal
-##### (replace placeholder text)
+##### (replace placeholders with values for your setup)
 ```
+# Now we set up some environment variables so that some values become available all the time
+# to the scripts we will use later. These are defined in ~/.bashrc
 echo "export USERNAME='<YOUR USERNAME>'" >> ~/.bashrc
 echo "export PUBLIC_IP_ADDR='<YOUR PUBLIC IP ADDRESS>'" >> ~/.bashrc
 echo "export REST_PORT='<YOUR REST PORT>'" >> ~/.bashrc
 echo "export PUBLIC_ADDRESS_PORT='<YOUR PUBLIC ADDRESS PORT>'" >> ~/.bashrc
 echo "export JORMUNGANDR_RESTAPI_URL='http://127.0.0.1:<YOUR REST PORT>/api'" >> ~/.bashrc
 echo "export JORMUNGANDR_STORAGE_DIR='/home/<YOUR USERNAME>/storage'" >> ~/.bashrc
-
-# What did we just do?
-# "echo" essentially means "print to screen"
-# "export" declares a variable in a special way, so that any shells that spawn from it inherit the variable.
-# ">>" means "take the output of the previous command and append it to the end of a file (.bashrc, in this case)
 ```
 
 ## Configure swap to handle memory spikes
@@ -326,7 +304,6 @@ sudo chmod 600 /swapfile
 # Mark the file as swap space
 sudo mkswap /swapfile
 
-# Enable swap settings every time we log in
 # Make a backup of /etc/fstab
 sudo cp /etc/fstab /etc/fstab.bak
 
@@ -417,7 +394,7 @@ sudo sysctl -p /etc/sysctl.conf
 
 ### Create a file to preserve our system settings on reboot
 `sudo nano /etc/rc.local`   
-(paste the follwing into /etc/rc.local)
+(paste the following into /etc/rc.local)
 ```
 #!/bin/bash
 
@@ -439,25 +416,23 @@ pool ntp.ubuntu.com        iburst maxsources 3
 pool time.nist.gov         iburst maxsources 3
 pool us.pool.ntp.org       iburst maxsources 3
 
-# This directive specify the location of the file containing ID/key pairs for
-# NTP authentication.
+# Specify the location of the file containing ID/key pairs for NTP authentication
 keyfile /etc/chrony/chrony.keys
 
-# This directive specify the file into which chronyd will store the rate
-# information.
+# Specify the file into which chronyd will store the rate information
 driftfile /var/lib/chrony/chrony.drift
 
 # Uncomment the following line to turn logging on.
 #log tracking measurements statistics
 
-# Log files location.
+# Log files location
 logdir /var/log/chrony
 
-# Stop bad estimates upsetting machine clock.
+# Stop bad estimates upsetting the machine clock
 maxupdateskew 10.0
 
-# This directive enables kernel synchronisation (every 11 minutes) of the
-# real-time clock. Note that it can’t be used along with the 'rtcfile' directive.
+# Enable kernel synchronisation (every 11 minutes) of the real-time clock.
+# Note that it can’t be used along with 'rtcfile'
 rtcsync
 
 # Step the system clock instead of slewing it if the adjustment is larger than
@@ -505,7 +480,7 @@ git tag
 (press 'q' to exit the list)
 
 git checkout <THE TAG>
-git checkout -b <NEW BRANCH NAME eg 8.5>
+git checkout -b <BRANCH REF>
 
 # Update submodules
 git submodule update --init --recursive
@@ -539,9 +514,10 @@ check_peers
 # Copy this to your clipboard
 openssl rand -hex 24
 
+# Edit the config file for jormungandr
 nano ~/files/node-config.yaml
 
-# Check Telegram (StakePool Best Practice Workgroup) pinned message for up-to-date genesis-hash & trusted peers
+# Check Telegram (StakePool Best Practice Workgroup) pinned message for the genesis-hash and trusted peers
 
 # Comment (add a "#" to the beginning of the line) for the slowest nodes (both public_address & public_id)
 # Replace <THE PLACEHOLDERS> with the appropriate values
@@ -604,45 +580,36 @@ mempool:
     garbage_collection_interval: 2h
 ```
 
-(Did you remember to replace the PLACEHOLDERS with the appropriate values)?
-
-### create a directory for storage
+### Create a directory for storage
 ```
-mkdir /home/<YOUR USERNAME>/storage
+mkdir ~/storage
 ```
 
-### generate the secret key
+### Generate the secret key
 `jcli key generate --type=Ed25519Extended > ~/files/receiver_secret.key`
 
 ### derive the public key from the secret key
 `cat ~/files/receiver_secret.key | jcli key to-public > ~/files/receiver_public.key`
 
 ### derive the public address from the public key
-```
 jcli address account --testing --prefix addr $(cat ~/files/receiver_public.key) | tee ~/files/receiver_account.txt
 ```
 
 ## Backup the keys
-### Caution: Protect `receiver_secret.key` 
-` Anyone who posesses receiver_secret.key can take the funds belonging to this key/address!`
-
-### Backup keys to your local machine
+### Caution: Protect `receiver_secret.key`, if someone gets it they can take funds that belong to it
 ```
-# Open a new tab in terminal on your local machine
-mkdir ~/jormungandr-backups
-mkdir ~/jormungandr-backups/<JORMUNGANDR VERSION>
+# Enter this command on your local machine
+mkdir ~/jormungandr-backup
 
 # Repeat this command for each file
-scp -P <YOUR SSH PORT> -i ~/.ssh/<YOUR SSH PRIVATE KEY> <YOUR VPS USERNAME>@<VPS PUBLIC IP ADDRESS>:files/<FILENAME> ~/jormungandr-backups/<JORMUNGANDR VERSION>/
+scp -P <YOUR SSH PORT> -i ~/.ssh/<YOUR SSH PRIVATE KEY> <YOUR VPS USERNAME>@<VPS PUBLIC IP ADDRESS>:files/<FILENAME> ~/jormungandr-backup/
 ```
 
 ## Get into bash
 ```
-# If you don't know about bash, now is a time to learn. The .bash_profile file you have installed has all the commands in it to help you control your node. To get into bash use
+# If you don't know about bash, now is a time to learn. The .bash_profile file you have installed has
+# all the commands in it to help you control your node. To get into bash use
 bash --login
-
-# To exit bash use
-exit
 
 # To see all the commands available from .bash_profile use
 commands
@@ -665,41 +632,22 @@ logs
 ```
 
 ## Monitor the node
-(These are a list of various commands… execute when necessary)
 ```
-# Find the PID of jormungandr (will be the first number on the left)
-get_pid
+# A useful for telling you the status of the node
+stats
 
-# What is the ip address of this node?
-get_ip
+# Also handy for telling you whether your node is up to date
+delta
 
 # Stop jormungandr
 stop
 
-# Start node in passive-mode (before you register as a stake-pool)
-start
-
-# Start node as a stake-pool (once you've registered as a stake-pool)
-start_leader
-
-# Check stats
-stats
-
-# View the last 60 lines of your log file
-logs
-
-# Clear the log file
-empty_logs
-
-# Check balance
-bal
+# A listing of all the commands with a brief description
+commands
 
 # How many nodes are connected?
 # Columns are [protocol, bytes-received, bytes-sent, your-ip, foreign-ip, state]
 nodes
-
-# Is node in sync with the network?
-delta
 
 # Check memory usage
 # If you have multiple cpu's, press shift+i for an accurate measurement
@@ -776,7 +724,6 @@ empty_logs
 
 # *IF* you need to delete the entire blockchain and start over...
 # This MIGHT be necessary after upgrading to a new release-candidate (during beta testing)
-# Consider making a backup copy of these files before deleting them, in case you change your mind.
 rm -rf ${JORMUNGANDR_STORAGE_DIR}
 
 rustup update
