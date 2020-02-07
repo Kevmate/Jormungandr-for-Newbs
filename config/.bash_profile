@@ -3,7 +3,10 @@ test -f ~/.bashrc && source ~/.bashrc
 
 function start() {
     # Start node
-    GREEN=$(printf "\033[0;32m")
+    if [ `check_ip` != "OK" ]; then
+        echo $errorMesg
+        return
+    fi
     echo "Starting jormungandr..."
     nohup jormungandr --config ~/files/node-config.yaml --genesis-block-hash $GENESIS_BLOCK_HASH >> ~/logs/node.out 2>&1 &
     sleep 1
@@ -20,6 +23,10 @@ function stop() {
 function stats() {
     # Statistics
     echo "$(jcli rest v0 node stats get -h http://127.0.0.1:${REST_PORT}/api)"
+    if [[ -f ~/files/receiver_account.txt ]]; then
+        pubAddress=`cat ~/files/receiver_account.txt`
+        printf "Public address: %s\n" $pubAddress
+    fi
 }
 
 function bal() {
@@ -34,6 +41,18 @@ function bal() {
 function get_ip() {
     # Server ip address
     echo "${PUBLIC_IP_ADDR}"
+}
+
+function check_ip() {
+    # Check my ip against config
+    configIp=`grep public_address ~/files/node-config.yaml | awk -F/ '{print $3}'`
+    myIp=`get_ip`
+    if [ $myIp != $configIp ]; then
+        errorMesg="IP address is incorrect in node-config.yaml"
+        echo $errorMesg
+    else
+        echo "OK"
+    fi
 }
 
 function get_process() {
@@ -93,11 +112,15 @@ function start_leader() {
     GREEN=$(printf "\033[0;32m")
     if [[ ! -f ~/files/node_scret.yaml ]]; then
         echo "Secret key not found"
-    else
-        nohup jormungandr --config ~/files/node-config.yaml --secret ~/files/node_secret.yaml --genesis-block-hash ${GENESIS_BLOCK_HASH} >> ~/logs/node.out 2>&1 &
-        sleep 1
-        get_pid
+        return
     fi
+    if [ `check_ip` != "OK" ]; then
+        echo $errorMesg
+        return
+    fi
+    nohup jormungandr --config ~/files/node-config.yaml --secret ~/files/node_secret.yaml --genesis-block-hash ${GENESIS_BLOCK_HASH} >> ~/logs/node.out 2>&1 &
+    sleep 1
+    get_pid
 }
 
 function logs() {
@@ -277,15 +300,13 @@ function next() {
         newEpoch=$(stats | grep Date | grep -Eo '[0-9]{1,3}' | awk 'NR==1{print $1}')
         maxSlots=$(leader_logs | grep -P 'scheduled_at_date: "'$newEpoch'.' | grep -P '[0-9]+' | wc -l)
         leaderSlots=$(leader_logs | grep -P 'scheduled_at_date: "'$newEpoch'.' | grep -P '[0-9]+' | awk -v i="$rowIndex" '{print $2}' | awk -F "." '{print $2}' | tr '"' ' ' | sort -V)
-        for (( rowIndex = 1; rowIndex <= $maxSlots ; rowIndex++ ))
-        do
+        for (( rowIndex = 1; rowIndex <= $maxSlots ; rowIndex++ )); do
             current_blocktime
             currentSlotTime=$((slot/2))
             #currentSlotTime=$(stats | grep 'lastBlockDate: "'$newEpoch'.' | awk -F "." '{print $2}' | tr '"' ' ')
             blockCreatedSlotTime=$(awk -v i="$rowIndex" 'NR==i {print $1}' <<< $leaderSlots)
 
-            if [[ $blockCreatedSlotTime -ge $currentSlotTime ]];
-            then
+            if [[ $blockCreatedSlotTime -ge $currentSlotTime ]]; then
                 timeToNextSlotLead=$(($blockCreatedSlotTime-$currentSlotTime))
                 currentTime=$(date +%s)
                 nextBlockDate=$(($chainstartdate+$blockCreatedSlotTime*2+($epoch)*86400))
@@ -317,8 +338,7 @@ function delta() {
     deltaMax=10
     counter=0
 
-    while [[ $counter -le $tries ]]
-    do
+    while [[ $counter -le $tries ]]; do
         shelleyLast3
         shelleyBlocks=`echo $shelleyResult | grep -m 1 -o '"chainLength":"[^"]*' | cut -d'"' -f4`
         shelleyBlockNum=`echo $shelleyBlocks | cut -d ' ' -f3`
